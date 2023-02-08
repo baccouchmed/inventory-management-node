@@ -4,6 +4,12 @@ const types = {
   internal: 'internal',
 };
 Object.freeze(types);
+const typesCompany = {
+  store: 'store',
+  supplier: 'supplier',
+  factory: 'factory',
+};
+Object.freeze(typesCompany);
 const featureStatus = {
   active: 'active',
   notActive: 'notActive',
@@ -15,5 +21,5 @@ const natures = {
 };
 Object.freeze(natures);
 module.exports = {
-  types, featureStatus, natures,
+  types, featureStatus, natures, typesCompany,
 };

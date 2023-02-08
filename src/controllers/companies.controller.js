@@ -6,6 +6,7 @@ const Company = require('../models/company');
 const Group = require('../models/group');
 const User = require('../models/user');
 const ParamProject = require('../models/paramProject');
+const { paginatedContracts } = require('../middlewares/pagination');
 
 const addCompany = async (req, res) => {
   try {
@@ -79,7 +80,11 @@ const addCompany = async (req, res) => {
 };
 const getAllCompanyPagination = (req, res) => {
   res.json(res.paginatedCompanies);
-};/*
+};
+const getAllContractsPagination = (req, res) => {
+  res.json(res.paginatedContracts);
+};
+/*
 const updateCompany = async (req, res) => {
     try {
         if (req.body.company && req.body.company.email) {
@@ -316,6 +321,7 @@ const updateLogo = async (req, res) => {
 module.exports = {
   addCompany,
   getAllCompanyPagination,
+  getAllContractsPagination,
   // updateCompany,
   getAllCompany,
   // getMyCompany,

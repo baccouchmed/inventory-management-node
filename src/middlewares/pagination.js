@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 const UserFeature = require('../models/user-feature');
 const ProductStock = require('../models/product-stock');
+const ProductStore = require('../models/product-store');
+const Company = require('../models/company');
+const { typesCompany } = require('../shared/enums');
 
 const paginatedUsers = (model) => async (req, res, next) => {
   try {
@@ -479,91 +482,6 @@ const paginatedGroups = (model) => async (req, res, next) => {
       ]);
     }
     res.paginatedGroups = { data, total: total[0].total };
-    next();
-  } catch (e) {
-    res.status(500)
-      .json({ message: e.message });
-  }
-};
-const paginatedCurrencys = (model) => async (req, res, next) => {
-  try {
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 10;
-    const search = req.query.search || '';
-    let sortLabel = {};
-    let sortAbbreviation = {};
-    const filter = {};
-    switch (req.query.sortLabel) {
-      case 'up':
-        sortLabel = { label: 1 };
-        break;
-      case 'down':
-        sortLabel = { label: -1 };
-        break;
-      default:
-        sortLabel = { label: -1 };
-    }
-    switch (req.query.sortAbbreviation) {
-      case 'up':
-        sortAbbreviation = { abbreviation: 1 };
-        break;
-      case 'down':
-        sortAbbreviation = { abbreviation: -1 };
-        break;
-      default:
-        sortAbbreviation = { abbreviation: -1 };
-    }
-    let sort = { ...sortLabel, ...sortAbbreviation };
-    if (req.query.sortLabel === 'up' || req.query.sortLabel === 'down') {
-      sort = { ...sortLabel };
-    }
-    if (req.query.sortAbbreviation === 'up' || req.query.sortAbbreviation === 'down') {
-      sort = { ...sortAbbreviation };
-    }
-
-    const startIndex = (page - 1) * limit;
-    let total = [{ total: 0 }];
-    const data = await model.aggregate([
-      {
-        $match: filter,
-      },
-      {
-        $match: {
-          $or: [
-            { label: { $regex: search, $options: 'i' } },
-            { abbreviation: { $regex: search, $options: 'i' } },
-          ],
-        },
-      },
-      {
-        $sort: sort,
-      },
-      {
-        $skip: startIndex,
-      },
-      {
-        $limit: limit,
-      },
-    ]);
-    if (data && data.length > 0) {
-      total = await model.aggregate([
-        {
-          $match: filter,
-        },
-        {
-          $match: {
-            $or: [
-              { label: { $regex: search, $options: 'i' } },
-              { abbreviation: { $regex: search, $options: 'i' } },
-            ],
-          },
-        },
-        {
-          $count: 'total',
-        },
-      ]);
-    }
-    res.paginatedCurrencys = { data, total: total[0].total };
     next();
   } catch (e) {
     res.status(500)
@@ -1169,11 +1087,12 @@ const paginatedProducts = (model) => async (req, res, next) => {
     if (data.length) {
       for await (const [index, product] of data.entries()) {
         const productStock = await ProductStock.findOne({ companyId: req.user.companyId, productId: product._id });
-        console.log(productStock || '***********************');
+        const productStore = await ProductStore.findOne({ companyId: req.user.companyId, productId: product._id });
         finalData[index] = {
           ...product,
           quantityInTotal: productStock && productStock.quantityIn.length ? productStock.quantityIn.reduce((a, b) => (a + b.quantity), 0) : 0,
           quantityOutTotal: productStock && productStock.quantityOut.length ? productStock.quantityOut.reduce((a, b) => (a + b.quantity), 0) : 0,
+          status: productStore !== null,
         };
       }
       finalData = finalData.map((val) => ({
@@ -1305,7 +1224,113 @@ const paginatedProductStocks = (model) => async (req, res, next) => {
       .json({ message: e.message });
   }
 };
+const paginatedContracts = (model) => async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const search = req.query.search || '';
+    let sortType = {};
+    let sortName = {};
+    const filter = {};
+    switch (req.query.sortType) {
+      case 'up':
+        sortType = { code: 1 };
+        break;
+      case 'down':
+        sortType = { code: -1 };
+        break;
+      default:
+        sortType = { code: -1 };
+    }
+    switch (req.query.sortName) {
+      case 'up':
+        sortName = { name: 1 };
+        break;
+      case 'down':
+        sortName = { name: -1 };
+        break;
+      default:
+        sortName = { name: -1 };
+    }
+    let sort = { ...sortType, ...sortName };
+    if (req.query.sortType === 'up' || req.query.sortCode === 'down') {
+      sort = { ...sortType };
+    }
+    if (req.query.sortName === 'up' || req.query.sortName === 'down') {
+      sort = { ...sortName };
+    }
+    const startIndex = (page - 1) * limit;
+    let total = [{ total: 0 }];
+    const myCompany = await Company.findById(req.user.companyId);
+    switch (myCompany.type) {
+      case typesCompany.store:
+        filter.type = { $in: [typesCompany.factory, typesCompany.supplier] };
+        break;
+      case typesCompany.supplier:
+        filter.type = { $in: [typesCompany.factory] };
+        break;
+      default:
+        break;
+    }
+    const data = await model.aggregate([
+      {
+        $match: filter,
+      },
+      {
+        $match: {
+          $or: [
+            { name: { $regex: search, $options: 'i' } },
+          ],
+        },
+      },
+      {
+        $sort: sort,
+      },
+      {
+        $skip: startIndex,
+      },
+      {
+        $limit: limit,
+      },
+    ]);
+    if (data && data.length > 0) {
+      total = await model.aggregate([
+        {
+          $match: filter,
+        },
+        {
+          $match: {
+            $or: [
+              { name: { $regex: search, $options: 'i' } },
+            ],
+          },
+        },
+        {
+          $count: 'total',
+        },
+      ]);
+    }
+    res.paginatedContracts = { data, total: total[0].total };
+    next();
+  } catch (e) {
+    res.status(500)
+      .json({ message: e.message });
+  }
+};
 
 module.exports = {
-  paginatedCompanies, paginatedProducts, paginatedProductStocks, paginatedCategories, paginatedUsers, paginatedFeatures, paginatedGroups, paginatedThirdParty, paginatedTypeThirdParty, paginatedUsersWithFeature, paginatedCountries, paginatedCurrencys, paginatedCompaniesProducts, paginatedTypeProducts,
+  paginatedCompanies,
+  paginatedProducts,
+  paginatedProductStocks,
+  paginatedCategories,
+  paginatedUsers,
+  paginatedFeatures,
+  paginatedGroups,
+  paginatedThirdParty,
+  paginatedTypeThirdParty,
+  paginatedUsersWithFeature,
+  paginatedCountries,
+  paginatedCompaniesProducts,
+  paginatedTypeProducts,
+  paginatedContracts,
 };

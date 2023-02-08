@@ -29,6 +29,7 @@ const paramProjectRoute = require('./routes/param-project.route');
 const thirdpartyRoute = require('./routes/third-party.route');
 const typethirdpartyRoute = require('./routes/type-third-party.route');
 const inventoryRoute = require('./routes/inventory.route');
+const countriesRoute = require('./routes/countries.route');
 // const companiesRoute = require('./routes/companies.route');
 
 app.use(morgan('combined'));
@@ -51,6 +52,7 @@ app.use('/api/paramProject', paramProjectRoute);
 app.use('/api/thirdparty', thirdpartyRoute);
 app.use('/api/typethirdparty', typethirdpartyRoute);
 app.use('/api/inventory', inventoryRoute);
+app.use('/api/countries', countriesRoute);
 
 // app.use('/api/companies', companiesRoute);
 // Index Route

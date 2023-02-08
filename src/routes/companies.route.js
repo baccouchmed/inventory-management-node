@@ -1,21 +1,22 @@
 const express = require('express');
 const {
-    param, body,
+  param, body,
 } = require('express-validator');
 const Company = require('../models/company');
 const { uploadLogo } = require('../shared/warped-multer');
 const { features, actions } = require('../shared/enum-features');
 const { isAuth, isAuthorized } = require('../middlewares/authorization');
-const { paginatedCompanies } = require('../middlewares/pagination');
+const { paginatedCompanies, paginatedContracts } = require('../middlewares/pagination');
 const {
-    getAllCompanyPagination,
-    getAllCompany,
-    addCompany,
-    getCompany,
-   // updateCompany,
-   // deleteCompany,
-   // updateLogo,
-   // getMyCompany,
+  getAllCompanyPagination,
+  getAllContractsPagination,
+  getAllCompany,
+  addCompany,
+  getCompany,
+  // updateCompany,
+  // deleteCompany,
+  // updateLogo,
+  // getMyCompany,
 
 } = require('../controllers/companies.controller');
 
@@ -23,6 +24,7 @@ const companiesRoute = express.Router();
 
 companiesRoute.post('/', isAuth, addCompany);
 companiesRoute.get('/', isAuth, paginatedCompanies(Company), getAllCompanyPagination);
+companiesRoute.get('/contracts', isAuth, paginatedContracts(Company), getAllContractsPagination);
 // companiesRoute.patch('/', isAuth, updateCompany);
 companiesRoute.get('/all', isAuth, getAllCompany);
 // companiesRoute.get('/me', isAuth, getMyCompany);

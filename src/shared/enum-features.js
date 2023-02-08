@@ -9,7 +9,6 @@ const features = {
   thirdParty: 'third-party',
   users: 'users',
   profile: 'profile',
-  currencies: 'currencies',
   userFeatures: 'user-features',
   countries: 'countries',
   paramProject: 'param-project',
@@ -21,6 +20,7 @@ const features = {
   companyProduct: 'company-product',
   typeProduct: 'type-product',
   inventory: 'inventory',
+  store: 'store',
   stocks: 'stocks',
 };
 Object.freeze(features);

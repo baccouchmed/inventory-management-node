@@ -37,10 +37,10 @@ const ProductStock = new Schema({
     totalPrice: { type: Number },
   }],
   minStock: {
-    type: 'Number',
+    type: Number,
   },
   price: {
-    type: 'Number',
+    type: Number,
   },
 }, { timestamps: true });
 

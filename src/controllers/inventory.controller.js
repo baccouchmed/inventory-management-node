@@ -4,6 +4,7 @@ const Subcategory = require('../models/subcategory');
 const Product = require('../models/product');
 const CompanyProduct = require('../models/company-product');
 const ProductStock = require('../models/product-stock');
+const ProductStore = require('../models/product-store');
 const { errorCatch } = require('../shared/utils');
 
 const addCategory = async (req, res) => {
@@ -230,6 +231,19 @@ const updateMinStock = async (req, res) => {
     return errorCatch(e, res);
   }
 };
+const updateStore = async (req, res) => {
+  try {
+    const { disable } = req.body;
+    if (disable) {
+      await ProductStore.deleteOne({ productId: req.params.id, companyId: req.user.companyId });
+      return res.status(204).end();
+    }
+    await ProductStore.create({ productId: req.params.id, companyId: req.user.companyId });
+    return res.status(204).end();
+  } catch (e) {
+    return errorCatch(e, res);
+  }
+};
 
 module.exports = {
   addCategory,
@@ -244,4 +258,5 @@ module.exports = {
   updatePrice,
   updateMinStock,
   deductStock,
+  updateStore,
 };

@@ -5,7 +5,7 @@ const Category = require('../models/category');
 const inventoryRoute = express.Router();
 
 const {
-  addCategory, addSubcategory, deductStock, addProduct, addStock, updatePrice, updateMinStock, addCompanyProduct, addInventory, getCategories, getCategory, getSubcategories,
+  addCategory, addSubcategory, deductStock, updateStore, addProduct, addStock, updatePrice, updateMinStock, addCompanyProduct, addInventory, getCategories, getCategory, getSubcategories,
 } = require('../controllers/inventory.controller');
 const { features, actions } = require('../shared/enum-features');
 const { paginatedCategories } = require('../middlewares/pagination');
@@ -72,4 +72,10 @@ inventoryRoute.patch('/stocks/:id/min-stock', isAuth, isAuthorized([
     actions: [actions.update],
   },
 ]), updateMinStock);
+inventoryRoute.patch('/store/:id', isAuth, isAuthorized([
+  {
+    code: features.store,
+    actions: [actions.update],
+  },
+]), updateStore);
 module.exports = inventoryRoute;
