@@ -22,6 +22,8 @@ const features = {
   inventory: 'inventory',
   store: 'store',
   stocks: 'stocks',
+  contracts: 'contracts',
+  productRequest: 'product-request',
 };
 Object.freeze(features);
 const actions = {

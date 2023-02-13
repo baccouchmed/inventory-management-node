@@ -16,5 +16,6 @@ module.exports = {
     'no-console': ['error', { allow: ['info', 'error', 'warn'] }],
     'no-underscore-dangle': 0,
     'consistent-return': 0,
+    'no-nested-ternary': 0,
   },
 };

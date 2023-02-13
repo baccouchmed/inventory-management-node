@@ -15,11 +15,20 @@ const Company = new Schema({
   address: {
     type: String,
   },
-  cityId: {
-    type: String,
+  governorateId: {
+    type: Schema.Types.ObjectId,
+    required: true,
+    ref: 'Governorate',
+  },
+  municipalityId: {
+    type: Schema.Types.ObjectId,
+    required: true,
+    ref: 'Municipality',
   },
   countryId: {
-    type: String,
+    type: Schema.Types.ObjectId,
+    required: true,
+    ref: 'Country',
   },
   postalCode: {
     type: String,

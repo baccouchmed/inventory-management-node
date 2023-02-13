@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
+const _ = require('lodash');
 const UserFeature = require('../models/user-feature');
 const ProductStock = require('../models/product-stock');
 const ProductStore = require('../models/product-store');
 const Company = require('../models/company');
-const { typesCompany } = require('../shared/enums');
+const Contrat = require('../models/contract');
+const { typesCompany, StatusContract } = require('../shared/enums');
 
 const paginatedUsers = (model) => async (req, res, next) => {
   try {
@@ -150,13 +152,22 @@ const paginatedCompanies = (model) => async (req, res, next) => {
       },
       {
         $lookup: {
-          from: 'cities',
-          localField: 'cityId',
+          from: 'municipalities',
+          localField: 'municipalityId',
           foreignField: '_id',
-          as: 'cityId',
+          as: 'municipalityId',
         },
       },
-      { $unwind: { path: '$cityId', preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: '$municipalityId', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'governorates',
+          localField: 'governorateId',
+          foreignField: '_id',
+          as: 'governorateId',
+        },
+      },
+      { $unwind: { path: '$governorateId', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
           from: 'countries',
@@ -1027,6 +1038,7 @@ const paginatedProducts = (model) => async (req, res, next) => {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     const search = req.query.search || '';
+    const id = req.query.id || null;
     const filter = {};
     const startIndex = (page - 1) * limit;
     let total = [{ total: 0 }];
@@ -1060,10 +1072,10 @@ const paginatedProducts = (model) => async (req, res, next) => {
         },
       },
       {
-        $skip: startIndex,
+        $skip: id ? 0 : startIndex,
       },
       {
-        $limit: limit,
+        $limit: id ? Infinity : limit,
       },
     ]);
     if (data && data.length > 0) {
@@ -1086,8 +1098,8 @@ const paginatedProducts = (model) => async (req, res, next) => {
     let finalData = data;
     if (data.length) {
       for await (const [index, product] of data.entries()) {
-        const productStock = await ProductStock.findOne({ companyId: req.user.companyId, productId: product._id });
-        const productStore = await ProductStore.findOne({ companyId: req.user.companyId, productId: product._id });
+        const productStock = await ProductStock.findOne({ companyId: (id || req.user.companyId), productId: product._id });
+        const productStore = await ProductStore.findOne({ companyId: (id || req.user.companyId), productId: product._id });
         finalData[index] = {
           ...product,
           quantityInTotal: productStock && productStock.quantityIn.length ? productStock.quantityIn.reduce((a, b) => (a + b.quantity), 0) : 0,
@@ -1099,6 +1111,11 @@ const paginatedProducts = (model) => async (req, res, next) => {
         ...val,
         myStock: Number(val.quantityInTotal) - Number(val.quantityOutTotal),
       }));
+      if (id) {
+        finalData = finalData.filter((val) => (val.status));
+        total[0].total = finalData.length;
+        finalData = finalData.splice(limit * (page - 1), limit);
+      }
     }
     res.paginatedProducts = { data: finalData, total: total[0].total };
     next();
@@ -1229,9 +1246,18 @@ const paginatedContracts = (model) => async (req, res, next) => {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     const search = req.query.search || '';
+    const country = req.query.country || null;
+    const governorate = req.query.governorate || null;
+    const municipality = req.query.municipality || null;
+    const typeCompany = req.query.typeCompany || null;
+    const statusContract = req.query.statusContract || null;
+
     let sortType = {};
     let sortName = {};
     const filter = {};
+    if (country) { filter.countryId = mongoose.Types.ObjectId(country); }
+    if (governorate) { filter.governorateId = mongoose.Types.ObjectId(governorate); }
+    if (municipality) { filter.municipalityId = mongoose.Types.ObjectId(municipality); }
     switch (req.query.sortType) {
       case 'up':
         sortType = { code: 1 };
@@ -1262,20 +1288,75 @@ const paginatedContracts = (model) => async (req, res, next) => {
     const startIndex = (page - 1) * limit;
     let total = [{ total: 0 }];
     const myCompany = await Company.findById(req.user.companyId);
-    switch (myCompany.type) {
-      case typesCompany.store:
-        filter.type = { $in: [typesCompany.factory, typesCompany.supplier] };
-        break;
-      case typesCompany.supplier:
-        filter.type = { $in: [typesCompany.factory] };
-        break;
-      default:
-        break;
+
+    if (typeCompany) { filter.type = typeCompany; } else {
+      filter.type = { $in: [typesCompany.factory, typesCompany.supplier, typesCompany.store] };
+    }
+
+    const contractsValidateRequester = await Contrat.find({ requesterId: myCompany._id, status: StatusContract.validate });
+    const contractsValidateRequested = await Contrat.find({ requestedId: myCompany._id, status: StatusContract.validate });
+    const contractsPendingRequester = await Contrat.find({ requesterId: myCompany._id, status: StatusContract.pending });
+    const contractsPendingRequested = await Contrat.find({ requestedId: myCompany._id, status: StatusContract.pending });
+    const contractsRejectedRequester = await Contrat.find({ requesterId: myCompany._id, status: StatusContract.rejected });
+    const contractsRejectedRequested = await Contrat.find({ requestedId: myCompany._id, status: StatusContract.rejected });
+
+    const validateCompaniesRequester = _.flatten(contractsValidateRequester.map((val) => (val.requestedId.toString())));
+    const validateCompaniesRequested = _.flatten(contractsValidateRequested.map((val) => (val.requesterId.toString())));
+    const pendingCompaniesRequester = _.flatten(contractsPendingRequester.map((val) => (val.requestedId.toString())));
+    const pendingCompaniesRequested = _.flatten(contractsPendingRequested.map((val) => (val.requesterId.toString())));
+    const rejectedCompaniesRequester = _.flatten(contractsRejectedRequester.map((val) => (val.requestedId.toString())));
+    const rejectedCompaniesRequested = _.flatten(contractsRejectedRequested.map((val) => (val.requesterId.toString())));
+
+    if (statusContract) {
+      switch (statusContract) {
+        case StatusContract.validate: filter._id = { $in: validateCompaniesRequester.concat(validateCompaniesRequested).map((val) => (mongoose.Types.ObjectId(val))) }; break;
+        case StatusContract.pending: filter._id = { $in: pendingCompaniesRequester.concat(pendingCompaniesRequested).map((val) => (mongoose.Types.ObjectId(val))) }; break;
+        case StatusContract.rejected: filter._id = { $in: rejectedCompaniesRequester.concat(rejectedCompaniesRequested).map((val) => (mongoose.Types.ObjectId(val))) }; break;
+        case StatusContract.opened: filter._id = {
+          $nin:
+          rejectedCompaniesRequester.concat(
+            rejectedCompaniesRequested,
+            pendingCompaniesRequester,
+            pendingCompaniesRequested,
+            validateCompaniesRequester,
+            validateCompaniesRequested,
+          ).map((val) => (mongoose.Types.ObjectId(val))),
+        }; break;
+
+        default: break;
+      }
     }
     const data = await model.aggregate([
       {
         $match: filter,
       },
+      {
+        $lookup: {
+          from: 'countries',
+          localField: 'countryId',
+          foreignField: '_id',
+          as: 'countryId',
+        },
+      },
+      { $unwind: { path: '$countryId', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'governorates',
+          localField: 'governorateId',
+          foreignField: '_id',
+          as: 'governorateId',
+        },
+      },
+      { $unwind: { path: '$governorateId', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'municipalities',
+          localField: 'municipalityId',
+          foreignField: '_id',
+          as: 'municipalityId',
+        },
+      },
+      { $unwind: { path: '$municipalityId', preserveNullAndEmptyArrays: true } },
       {
         $match: {
           $or: [
@@ -1310,7 +1391,235 @@ const paginatedContracts = (model) => async (req, res, next) => {
         },
       ]);
     }
-    res.paginatedContracts = { data, total: total[0].total };
+    let finalData;
+    if (data.length) {
+      finalData = data.map((val) => ({
+        ...val,
+        statusContract:
+          validateCompaniesRequester.concat(validateCompaniesRequested).includes(val._id.toString()) ? StatusContract.validate
+            : rejectedCompaniesRequester.concat(rejectedCompaniesRequested).includes(val._id.toString()) ? StatusContract.rejected
+              : pendingCompaniesRequester.concat(pendingCompaniesRequested).includes(val._id.toString()) ? StatusContract.pending
+                : null,
+        creator: validateCompaniesRequester.concat(rejectedCompaniesRequester, pendingCompaniesRequester).includes(val._id.toString()),
+      }));
+    }
+    res.paginatedContracts = { data: data.length ? finalData : data, total: total[0].total };
+    next();
+  } catch (e) {
+    res.status(500)
+      .json({ message: e.message });
+  }
+};
+const paginatedValidateContracts = (model) => async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const search = req.query.search || '';
+    const country = req.query.country || null;
+    const governorate = req.query.governorate || null;
+    const municipality = req.query.municipality || null;
+    const typeCompany = req.query.typeCompany || null;
+
+    let sortType = {};
+    let sortName = {};
+    const filter = {};
+    if (country) { filter.countryId = mongoose.Types.ObjectId(country); }
+    if (governorate) { filter.governorateId = mongoose.Types.ObjectId(governorate); }
+    if (municipality) { filter.municipalityId = mongoose.Types.ObjectId(municipality); }
+    switch (req.query.sortType) {
+      case 'up':
+        sortType = { code: 1 };
+        break;
+      case 'down':
+        sortType = { code: -1 };
+        break;
+      default:
+        sortType = { code: -1 };
+    }
+    switch (req.query.sortName) {
+      case 'up':
+        sortName = { name: 1 };
+        break;
+      case 'down':
+        sortName = { name: -1 };
+        break;
+      default:
+        sortName = { name: -1 };
+    }
+    let sort = { ...sortType, ...sortName };
+    if (req.query.sortType === 'up' || req.query.sortCode === 'down') {
+      sort = { ...sortType };
+    }
+    if (req.query.sortName === 'up' || req.query.sortName === 'down') {
+      sort = { ...sortName };
+    }
+    let total = 0;
+    const myCompany = await Company.findById(req.user.companyId);
+
+    if (typeCompany) { filter.type = typeCompany; } else {
+      switch (myCompany.type) {
+        case typesCompany.store:
+          filter.type = { $in: [typesCompany.factory, typesCompany.supplier] };
+          break;
+        case typesCompany.supplier:
+          filter.type = { $in: [typesCompany.factory] };
+          break;
+        default:
+          break;
+      }
+    }
+    const contractsValidate = await Contrat.find({ companiesId: myCompany._id, status: StatusContract.validate });
+
+    const validateCompanies = _.flatten(contractsValidate.map((val) => (val.companiesId.map((el) => (el.toString())))));
+    const data = await model.aggregate([
+      {
+        $match: filter,
+      },
+      {
+        $lookup: {
+          from: 'countries',
+          localField: 'countryId',
+          foreignField: '_id',
+          as: 'countryId',
+        },
+      },
+      { $unwind: { path: '$countryId', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'governorates',
+          localField: 'governorateId',
+          foreignField: '_id',
+          as: 'governorateId',
+        },
+      },
+      { $unwind: { path: '$governorateId', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'municipalities',
+          localField: 'municipalityId',
+          foreignField: '_id',
+          as: 'municipalityId',
+        },
+      },
+      { $unwind: { path: '$municipalityId', preserveNullAndEmptyArrays: true } },
+      {
+        $match: {
+          $or: [
+            { name: { $regex: search, $options: 'i' } },
+          ],
+        },
+      },
+    ]);
+    let finalData;
+    if (data.length) {
+      finalData = data.map((val) => ({
+        ...val,
+        statusContract:
+          validateCompanies.includes(val._id.toString()) ? StatusContract.validate : null,
+      })).filter((val) => (val.statusContract));
+      total = finalData.filter((val) => (val.statusContract)).length;
+    }
+    res.paginatedValidateContracts = { data: data.length ? finalData : data, total };
+    next();
+  } catch (e) {
+    res.status(500)
+      .json({ message: e.message });
+  }
+};
+const paginatedProductRequest = (model) => async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const search = req.query.search || '';
+    const typeRequest = req.query.typeRequest || null;
+    const filter = {};
+    switch (typeRequest) {
+      case 'myRequests': filter.requesterId = mongoose.Types.ObjectId(req.user.companyId); break;
+      default: filter.requestedId = mongoose.Types.ObjectId(req.user.companyId); break;
+    }
+    const startIndex = (page - 1) * limit;
+    let total = [{ total: 0 }];
+    const data = await model.aggregate([
+      {
+        $match: filter,
+      },
+      {
+        $lookup: {
+          from: 'companies',
+          localField: 'requestedId',
+          foreignField: '_id',
+          as: 'requestedId',
+        },
+      },
+      { $unwind: { path: '$requestedId', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'companies',
+          localField: 'requesterId',
+          foreignField: '_id',
+          as: 'requesterId',
+        },
+      },
+      { $unwind: { path: '$requesterId', preserveNullAndEmptyArrays: true } },
+      { $unwind: '$productsId' },
+      {
+        $lookup: {
+          from: 'products',
+          let: {
+            productId: { $toObjectId: '$productsId.productId' },
+            productsId: '$productsId',
+          },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$productId'] } } },
+            { $replaceRoot: { newRoot: { $mergeObjects: ['$$productsId', '$$ROOT'] } } },
+          ],
+          as: 'productsId',
+        },
+      },
+      { $unwind: { path: '$productsId', preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: '$_id',
+          updatedAt: { $first: '$updatedAt' },
+          requestedValidation: { $first: '$requestedValidation' },
+          requesterValidation: { $first: '$requesterValidation' },
+          dueDate: { $first: '$dueDate' },
+          requesterId: { $first: '$requesterId' },
+          requestedId: { $first: '$requestedId' },
+          productsId: { $push: '$productsId' },
+        },
+      },
+      {
+        $skip: startIndex,
+      },
+      {
+        $limit: limit,
+      },
+    ]);
+    if (data && data.length > 0) {
+      total = await model.aggregate([
+        {
+          $match: filter,
+        },
+        {
+          $count: 'total',
+        },
+      ]);
+    }
+    const finalData = data;
+    /* if (data.length) {
+      finalData = data.map((val) => ({
+        ...val,
+        quantityInTotal: val.quantityIn.reduce((a, b) => (a + b.quantity), 0),
+        totalInPrice: val.quantityIn.reduce((a, b) => (a + (Number(b.quantity) * Number(b.unitPrice))), 0),
+        quantityOutTotal: val.quantityOut.reduce((a, b) => (a + b.quantity), 0),
+        totalOutPrice: val.quantityOut.reduce((a, b) => (a + (Number(b.quantity) * Number(b.unitPrice))), 0),
+      })).map((val) => ({
+        ...val,
+        quantityTotal: Number(val.quantityInTotal) - Number(val.quantityOutTotal),
+      }));
+    } */
+    res.paginatedProductRequest = { data: finalData, total: total[0].total };
     next();
   } catch (e) {
     res.status(500)
@@ -1333,4 +1642,6 @@ module.exports = {
   paginatedCompaniesProducts,
   paginatedTypeProducts,
   paginatedContracts,
+  paginatedValidateContracts,
+  paginatedProductRequest,
 };

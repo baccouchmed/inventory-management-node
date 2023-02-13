@@ -20,6 +20,13 @@ const natures = {
   physical: 'physical',
 };
 Object.freeze(natures);
+const StatusContract = {
+  pending: 'pending',
+  validate: 'validate',
+  rejected: 'rejected',
+  opened: 'opened',
+};
+Object.freeze(StatusContract);
 module.exports = {
-  types, featureStatus, natures, typesCompany,
+  types, featureStatus, natures, typesCompany, StatusContract,
 };

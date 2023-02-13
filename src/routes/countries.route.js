@@ -8,8 +8,10 @@ const {
   deleteCountry,
   addCountry,
   getSingleCountry,
-  getCities,
+  getGovernorates,
+  getMunicipalities,
   updateCountry,
+  getAllCountries,
 } = require('../controllers/countries.controller');
 const { features, actions } = require('../shared/enum-features');
 
@@ -40,6 +42,8 @@ countriesRoute.post('/', isAuth, isAuthorized([
   },
 ]),
 addCountry);
+countriesRoute.get('/all', isAuth,
+  getAllCountries);
 // get single country
 countriesRoute.get('/:id',
   isAuth, isAuthorized([
@@ -49,9 +53,12 @@ countriesRoute.get('/:id',
     },
   ]),
   getSingleCountry);
-// Get cities
-countriesRoute.get('/:id/cities', isAuth,
-  getCities);
+// Get governorates
+countriesRoute.get('/:id/governorates', isAuth,
+  getGovernorates);
+// Get municipalities
+countriesRoute.get('/:id/municipalities', isAuth,
+  getMunicipalities);
 // update country
 countriesRoute.patch('/', isAuth, isAuthorized([
   {

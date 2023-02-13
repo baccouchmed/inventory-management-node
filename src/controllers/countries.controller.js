@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const { errorCatch } = require('../shared/utils');
 const City = require('../models/municipality');
 const Country = require('../models/country');
+const Governorate = require('../models/governorate');
+const Municipality = require('../models/municipality');
 
 const getCountries = (req, res) => {
   res.json(res.paginatedCountries);
@@ -63,10 +65,26 @@ const getSingleCountry = async (req, res) => {
     return errorCatch(e, res);
   }
 };
-const getCities = async (req, res) => {
+const getAllCountries = async (req, res) => {
   try {
-    const cities = await City.find({ countryId: mongoose.Types.ObjectId(req.params.id) });
-    return res.status(200).json(cities);
+    const countries = await Country.find();
+    return res.status(200).json(countries);
+  } catch (e) {
+    return errorCatch(e, res);
+  }
+};
+const getGovernorates = async (req, res) => {
+  try {
+    const governorates = await Governorate.find({ countryId: mongoose.Types.ObjectId(req.params.id) });
+    return res.status(200).json(governorates);
+  } catch (e) {
+    return errorCatch(e, res);
+  }
+};
+const getMunicipalities = async (req, res) => {
+  try {
+    const governorates = await Municipality.find({ governorateId: mongoose.Types.ObjectId(req.params.id) });
+    return res.status(200).json(governorates);
   } catch (e) {
     return errorCatch(e, res);
   }
@@ -120,6 +138,8 @@ module.exports = {
   deleteCountry,
   addCountry,
   getSingleCountry,
-  getCities,
+  getGovernorates,
+  getMunicipalities,
+  getAllCountries,
   updateCountry,
 };
