@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
-const Feature = require('../models/feature');
-const UsersFeature = require('../models/user-feature');
-const GroupFeature = require('../models/group-feature');
+const Feature = require('../models/setting/feature');
+const UsersFeature = require('../models/administration/user-feature');
+const GroupFeature = require('../models/administration/group-feature');
 const { featureStatus } = require('../shared/enums');
 const { types } = require('../shared/enums');
 const { features, actions } = require('../shared/enum-features');

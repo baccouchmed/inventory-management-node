@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link rel="stylesheet" href="product-request-invoice.css" />
+
+  <style>
+    .container {
+      max-width: 80%;
+      margin: auto;
+      margin-top: 50px;
+      line-height: 0.2;
+      text-align: left;
+      font-size: 14px;
+    }
+    div {
+      margin-bottom: 20px;
+    }
+
+    .d-f {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .f-td {
+      width: 50%;
+    }
+
+    .f-l {
+      float: left;
+    }
+
+    .f-r {
+      float: right;
+    }
+
+
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="d-f" style="margin-bottom: 40px;">
+    <div>
+      <p style="font-size: 20px;font-weight: 800">Facture {{invoiceRefCol}}</p>
+      <p>DATE DE LA FACTURE : {{dateNow}}</p>
+
+      <p>TOTAL DÛ : {{totals}}</p>
+    </div>
+  </div>
+  <div class="d-f" style="margin-bottom: 20px;">
+    <div>
+      <p>{{collectivity.nameCollectivity}}</p>
+      <p>{{collectivity.address}}</p>
+      <p>{{collectivity.postalCode}}, {{collectivity.city}}</p>
+      <p>{{#if collectivity.email}}{{collectivity.email}}{{/if}}</p>
+      <p>{{#if collectivity.phoneNumber}}{{collectivity.phoneNumber}}{{/if}}</p>
+    </div>
+    <div>
+      <p style="text-decoration: underline;">Adressé à :</p>
+
+      <p>{{user.companyAssociationName}}</p>
+      <p>{{user.address}}</p>
+      <p>{{user.postalCode}}, {{user.city}}</p>
+      <p> Siret : {{user.siretRna}}</p>
+      <p> TVA : {{user.tvaNumber}}</p>
+
+    </div>
+  </div>
+  <div  style="margin-bottom: 30px;">
+    <p style="text-decoration: underline;">Votre Location : </p>
+    <p>Référence réservation  : {{_id}}</p>
+  </div>
+</div>
+<div>
+  <table style="min-width: 80%" >
+    <tr>
+      <th style="max-width: 10%; min-width: 10%">N°</th>
+      <th style="max-width: 45%; min-width: 45%">Produit</th>
+      <th style="max-width: 15%; min-width: 15%">Quantité</th>
+      <th style="max-width: 15%; min-width: 15%">Prix unitaire</th>
+      <th style="max-width: 15%; min-width: 15%">Total</th>
+    </tr>
+    {{#each products}}
+    <tr >
+      <td   >{{this.index}}</td>
+      <td   >{{this.name}}</td>
+      <td   >{{this.quantity}}</td>
+      <td   >{{this.unitPrice}}</td>
+      <td   >{{this.total}}</td>
+    </tr>
+    {{/each}}
+    <tr >
+      <td   ></td>
+      <td   ></td>
+      <td   ></td>
+      <td   ></td>
+      <td   >{{this.totals}}</td>
+    </tr>
+  </table>
+  <div style="font-size: 10px;
+                  line-height: 0.1;
+                  min-width: 100%;
+                  position: absolute;
+                  bottom:20px;
+                  text-align: center;
+                  margin-left: auto;
+                  margin-right: auto"
+  >
+    <p>
+      Facture émise par MARILOO SAS, 87 rue du Fontenoy – SIRET 90092753400017
+    </p>
+    <p>
+      au nom et pour le compte de {{collectivity.nameCollectivity}}
+    </p>
+
+    <p>
+      {{collectivity.address}}, {{collectivity.postalCode}}, {{collectivity.city}} -
+      TVA : {{collectivity.tvaNumber}}
+    </p>
+  </div>
+</div>
+</body>
+
+</html>

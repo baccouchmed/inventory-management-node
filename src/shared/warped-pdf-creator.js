@@ -27,8 +27,8 @@ const generatePdf = async (data, template, output) => {
       inputBody: html,
       outputPath: output,
       options: {
-        pageSize: 'A3',
-        landscape: true,
+        pageSize: 'A4',
+        landscape: false,
         printBackground: true,
       },
       templatePath: path.join('src', 'template'),

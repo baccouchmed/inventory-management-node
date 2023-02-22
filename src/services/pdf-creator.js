@@ -1,8 +1,6 @@
-// const path = require('path');
-
 const fs = require('fs');
 
-// const { generatePdf } = require('../shared/warped-pdf-creator');
+const { generatePdf } = require('../shared/warped-pdf-creator');
 const { errorCatch } = require('../shared/utils');
 
 const createInvoice = async (
@@ -21,9 +19,9 @@ const createInvoice = async (
       folderCreation = `${folderCreation}/${folder}`;
     }
 
-    /* await generatePdf(
+    await generatePdf(
       data, templatePath, outputPath,
-    ); */
+    );
 
     return true;
   } catch (e) {

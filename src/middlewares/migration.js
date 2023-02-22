@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const Migration = require('../models/migration');
+const Migration = require('../models/util/migration');
 
 const migration = async () => {
   // eslint-disable-next-line no-useless-catch

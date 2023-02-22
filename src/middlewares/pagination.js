@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 const _ = require('lodash');
-const UserFeature = require('../models/user-feature');
-const ProductStock = require('../models/product-stock');
-const ProductStore = require('../models/product-store');
-const Company = require('../models/company');
-const Contrat = require('../models/contract');
+const UserFeature = require('../models/administration/user-feature');
+const ProductStock = require('../models/sgs/product-stock');
+const ProductStore = require('../models/sgs/product-store');
+const Company = require('../models/administration/company');
+const Contrat = require('../models/sgs/contract');
 const { typesCompany, StatusContract } = require('../shared/enums');
 
 const paginatedUsers = (model) => async (req, res, next) => {
@@ -1039,7 +1039,15 @@ const paginatedProducts = (model) => async (req, res, next) => {
     const limit = parseInt(req.query.limit, 10) || 10;
     const search = req.query.search || '';
     const id = req.query.id || null;
+    const type = req.query.type || null;
+    const company = req.query.company || null;
     const filter = {};
+    if (type) {
+      filter.typeProductId = mongoose.Types.ObjectId(type);
+    }
+    if (company) {
+      filter.companyProductId = mongoose.Types.ObjectId(company);
+    }
     const startIndex = (page - 1) * limit;
     let total = [{ total: 0 }];
     const data = await model.aggregate([
@@ -1098,13 +1106,14 @@ const paginatedProducts = (model) => async (req, res, next) => {
     let finalData = data;
     if (data.length) {
       for await (const [index, product] of data.entries()) {
-        const productStock = await ProductStock.findOne({ companyId: (id || req.user.companyId), productId: product._id });
+        const productStock = await ProductStock.findOne({ companyId: req.user.companyId, productId: product._id });
         const productStore = await ProductStore.findOne({ companyId: (id || req.user.companyId), productId: product._id });
         finalData[index] = {
           ...product,
           quantityInTotal: productStock && productStock.quantityIn.length ? productStock.quantityIn.reduce((a, b) => (a + b.quantity), 0) : 0,
           quantityOutTotal: productStock && productStock.quantityOut.length ? productStock.quantityOut.reduce((a, b) => (a + b.quantity), 0) : 0,
           status: productStore !== null,
+          minStock: productStock && productStock.minStock ? productStock.minStock : null,
         };
       }
       finalData = finalData.map((val) => ({
@@ -1129,7 +1138,23 @@ const paginatedProductStocks = (model) => async (req, res, next) => {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     const search = req.query.search || '';
-    const filter = { companyId: mongoose.Types.ObjectId(req.user.companyId) };
+    const type = req.query.type || null;
+    const company = req.query.company || null;
+    const inStock = req.query.inStock || null;
+    const minStock = req.query.minStock || null;
+    let filter = { companyId: mongoose.Types.ObjectId(req.user.companyId) };
+    if (type) {
+      filter.typeProductId = mongoose.Types.ObjectId(type);
+    }
+    if (company) {
+      filter.companyProductId = mongoose.Types.ObjectId(company);
+    }
+    if (inStock) {
+      filter.inStock = { $gte: Number(inStock) };
+    }
+    if (minStock) {
+      filter = { ...filter, $expr: { $lte: ['$inStock', '$minStock' || 0] } };
+    }
     const startIndex = (page - 1) * limit;
     let total = [{ total: 0 }];
     const data = await model.aggregate([

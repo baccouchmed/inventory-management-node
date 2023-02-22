@@ -1,6 +1,6 @@
-const Country = require('../models/country');
-const Governorate = require('../models/governorate');
-const Municipality = require('../models/municipality');
+const Country = require('../models/setting/country');
+const Governorate = require('../models/setting/governorate');
+const Municipality = require('../models/setting/municipality');
 
 const script = async () => {
   try {

@@ -1,8 +1,8 @@
-const Feature = require('../models/feature');
-const UsersFeature = require('../models/user-feature');
-const GroupFeature = require('../models/group-feature');
+const Feature = require('../models/setting/feature');
+const UsersFeature = require('../models/administration/user-feature');
+const GroupFeature = require('../models/administration/group-feature');
 const { featureStatus, types } = require('./enums');
-const UserGroup = require('../models/user-group');
+const UserGroup = require('../models/administration/user-group');
 
 const getDefaultFeature = async (user) => {
   if (user.type === types.super) {

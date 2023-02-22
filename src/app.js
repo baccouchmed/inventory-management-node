@@ -18,21 +18,19 @@ setupMongoServer();
 migrationScript();
 
 // Set up email cron
-const authenticationRoute = require('./routes/authentication.route');
-const usersRoute = require('./routes/users.route');
-const companiesRoute = require('./routes/companies.route');
-const companiesProductsRoute = require('./routes/companies-products.route');
-const menusRoute = require('./routes/menu.route');
-const featuresRoute = require('./routes/features.route');
-const groupsRoute = require('./routes/groups.route');
-const paramProjectRoute = require('./routes/param-project.route');
-const thirdpartyRoute = require('./routes/third-party.route');
-const typethirdpartyRoute = require('./routes/type-third-party.route');
-const inventoryRoute = require('./routes/inventory.route');
-const countriesRoute = require('./routes/countries.route');
-const contractsRoute = require('./routes/contracts.route');
-const productRequestRoute = require('./routes/product-request.route');
-// const companiesRoute = require('./routes/companies.route');
+const authenticationRoute = require('./routes/auth-menu/authentication.route');
+const usersRoute = require('./routes/administration/users.route');
+const companiesRoute = require('./routes/administration/companies.route');
+const companiesProductsRoute = require('./routes/setting/companies-products.route');
+const menusRoute = require('./routes/auth-menu/menu.route');
+const featuresRoute = require('./routes/setting/features.route');
+const groupsRoute = require('./routes/administration/groups.route');
+const paramProjectRoute = require('./routes/administration/param-project.route');
+const inventoryRoute = require('./routes/sgs/inventory.route');
+const countriesRoute = require('./routes/setting/countries.route');
+const contractsRoute = require('./routes/sgs/contracts.route');
+const productRequestRoute = require('./routes/sgs/product-request.route');
+const badgesRoute = require('./routes/auth-menu/badges.route');
 
 app.use(morgan('combined'));
 // Setting up static directory
@@ -51,12 +49,11 @@ app.use('/api/menus', menusRoute);
 app.use('/api/features', featuresRoute);
 app.use('/api/groups', groupsRoute);
 app.use('/api/paramProject', paramProjectRoute);
-app.use('/api/thirdparty', thirdpartyRoute);
-app.use('/api/typethirdparty', typethirdpartyRoute);
 app.use('/api/inventory', inventoryRoute);
 app.use('/api/countries', countriesRoute);
 app.use('/api/contracts', contractsRoute);
 app.use('/api/product-request', productRequestRoute);
+app.use('/api/badges', badgesRoute);
 
 // app.use('/api/companies', companiesRoute);
 // Index Route
