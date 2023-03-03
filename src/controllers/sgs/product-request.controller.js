@@ -1,6 +1,7 @@
 const moment = require('moment');
 const path = require('path');
 const mongoose = require('mongoose');
+const fs = require('fs');
 const ProductRequest = require('../../models/sgs/product-request');
 const ProductStock = require('../../models/sgs/product-stock');
 const { errorCatch } = require('../../shared/utils');
@@ -73,6 +74,27 @@ const validateQuantity = async (req, res) => {
     return errorCatch(e, res);
   }
 };
+const validateUnitPrice = async (req, res) => {
+  try {
+    const {
+      unitPriceRequested,
+    } = req.body;
+    const updatedProductRequest = await ProductRequest.findOne(
+      {
+        _id: req.params.productRequest,
+        'productsId.productId': req.params.id,
+      },
+    );
+    updatedProductRequest.productsId[
+      updatedProductRequest.productsId.map((val) => val.productId).indexOf(req.params.id)
+    ].unitPriceRequested = unitPriceRequested;
+
+    await updatedProductRequest.save();
+    return res.status(204).end();
+  } catch (e) {
+    return errorCatch(e, res);
+  }
+};
 const requestedValidate = async (req, res) => {
   try {
     const {
@@ -94,20 +116,13 @@ const requesterValidate = async (req, res) => {
     updatedProductRequest.requesterValidation = true;
 
     await updatedProductRequest.save();
-    console.log(updatedProductRequest.productsId[0].productId);
-    const products = await Promise.all(updatedProductRequest.productsId.map(async (val, index) => {
-      const unitPrice = await ProductStock.findOne({
-        companyId: mongoose.Types.ObjectId(updatedProductRequest.requestedId),
-        productId: mongoose.Types.ObjectId(val._id),
-      });
-      return {
-        index: index + 1,
-        name: val.productId.label,
-        quantity: val.quantityValidated || val.quantityRequested,
-        unitPrice: unitPrice && unitPrice.price ? unitPrice.price : 0,
-        total: (unitPrice && unitPrice.price ? unitPrice.price : 0) * (val.quantityValidated || val.quantityRequested),
-      };
-    }));
+    const products = await Promise.all(updatedProductRequest.productsId.map(async (val, index) => ({
+      index: index + 1,
+      name: val.productId.label,
+      quantity: val.quantityValidated || val.quantityRequested,
+      unitPrice: val.unitPriceRequested,
+      total: (val.unitPriceRequested) * (val.quantityValidated || val.quantityRequested),
+    })));
     await createInvoice(
       {
         invoiceRefCol: '123456789',
@@ -130,7 +145,6 @@ const requesterValidate = async (req, res) => {
           tvaNumber: '123456789',
         },
         _id: '123456789',
-        itemName: 'danino',
         products,
         totals: products.reduce((a, b) => a + b.total, 0),
       },
@@ -143,6 +157,61 @@ const requesterValidate = async (req, res) => {
     return errorCatch(e, res);
   }
 };
+const requestedDone = async (req, res) => {
+  try {
+    const updatedProductRequest = await ProductRequest.findById(req.params.productRequest).populate('requestedId');
+    updatedProductRequest.done = true;
+
+    await updatedProductRequest.save();
+    for await (const product of updatedProductRequest.productsId) {
+      await ProductStock.findOneAndUpdate(
+        { companyId: updatedProductRequest.requesterId, productId: product._id },
+        {
+          $addToSet: {
+            quantityIn: {
+              quantity: product.quantityValidated,
+              date: moment().format(),
+              unitPrice: product.unitPriceRequested,
+              totalPrice: product.unitPriceRequested * Number(product.quantityValidated),
+            },
+          },
+          $inc: {
+            inStock: product.quantityValidated,
+          },
+        },
+      );
+      await ProductStock.findOneAndUpdate(
+        { companyId: updatedProductRequest.requestedId, productId: product._id },
+        {
+          $addToSet: {
+            quantityOut: {
+              quantity: product.quantityValidated,
+              date: moment().format(),
+              unitPrice: product.unitPriceRequested,
+              totalPrice: product.unitPriceRequested * Number(product.quantityValidated),
+            },
+          },
+          $inc: {
+            inStock: -Number(product.quantityValidated),
+          },
+        },
+      );
+    }
+    return res.status(204).end();
+  } catch (e) {
+    return errorCatch(e, res);
+  }
+};
+const downloadInvoice = async (req, res) => {
+  try {
+    const newFileName = `Invoice ${moment().format('DD-MM-YYYY')}.pdf`;
+    const filePath = path.join('src', 'private', 'invoices', 'stock-request', req.query.id, 'invoice.pdf');
+
+    return res.download(filePath, newFileName);
+  } catch (e) {
+    return errorCatch(e, res);
+  }
+};
 module.exports = {
-  addProductRequest, getAllProductRequest, updateQuantity, validateQuantity, requestedValidate, requesterValidate,
+  addProductRequest, downloadInvoice, validateUnitPrice, requestedDone, getAllProductRequest, updateQuantity, validateQuantity, requestedValidate, requesterValidate,
 };

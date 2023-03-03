@@ -24,12 +24,16 @@ const ProductRequest = new Schema({
       },
       quantityRequested: { type: Number },
       quantityValidated: { type: Number },
+      unitPriceRequested: { type: Number },
     },
   ],
   requesterValidation: {
     type: Boolean,
   },
   requestedValidation: {
+    type: Boolean,
+  },
+  done: {
     type: Boolean,
   },
 }, { timestamps: true });

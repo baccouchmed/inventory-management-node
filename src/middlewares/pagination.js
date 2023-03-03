@@ -1608,6 +1608,7 @@ const paginatedProductRequest = (model) => async (req, res, next) => {
           updatedAt: { $first: '$updatedAt' },
           requestedValidation: { $first: '$requestedValidation' },
           requesterValidation: { $first: '$requesterValidation' },
+          done: { $first: '$done' },
           dueDate: { $first: '$dueDate' },
           requesterId: { $first: '$requesterId' },
           requestedId: { $first: '$requestedId' },

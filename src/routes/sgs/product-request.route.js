@@ -4,7 +4,7 @@ const { isAuth, isAuthorized } = require('../../middlewares/authorization');
 const productRequestRoute = express.Router();
 
 const {
-  addProductRequest, getAllProductRequest, updateQuantity, validateQuantity, requestedValidate, requesterValidate,
+  addProductRequest, getAllProductRequest, updateQuantity, downloadInvoice, validateUnitPrice, validateQuantity, requestedValidate, requesterValidate, requestedDone,
 } = require('../../controllers/sgs/product-request.controller');
 const { features, actions } = require('../../shared/enum-features');
 const { paginatedProductRequest } = require('../../middlewares/pagination');
@@ -29,6 +29,12 @@ productRequestRoute.patch('/:productRequest/validate-quantity/:id', isAuth, isAu
     actions: [actions.create],
   },
 ]), validateQuantity);
+productRequestRoute.patch('/:productRequest/unit-price-requested/:id', isAuth, isAuthorized([
+  {
+    code: features.contracts,
+    actions: [actions.create],
+  },
+]), validateUnitPrice);
 productRequestRoute.patch('/:productRequest/requested-validate', isAuth, isAuthorized([
   {
     code: features.contracts,
@@ -41,4 +47,12 @@ productRequestRoute.get('/:productRequest/requester-validate', isAuth, isAuthori
     actions: [actions.create],
   },
 ]), requesterValidate);
+productRequestRoute.get('/:productRequest/requested-done', isAuth, isAuthorized([
+  {
+    code: features.contracts,
+    actions: [actions.create],
+  },
+]), requestedDone);
+productRequestRoute.get('/download-invoice', isAuth, downloadInvoice);
+
 module.exports = productRequestRoute;
