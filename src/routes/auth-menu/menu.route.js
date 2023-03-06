@@ -19,7 +19,6 @@ menusRoute.get('/', isAuth,
     try {
       let features = [];
       const user = await User.findById(req.user.id);
-      console.log(req.user.type);
       if (req.user.type === types.super) {
         const featureList = await Feature.aggregate([
           {
@@ -29,7 +28,6 @@ menusRoute.get('/', isAuth,
             $sort: { order: 1 },
           },
         ]);
-        console.log(featureList);
         features = featureList.map((feature) => ({
           _id: feature._id,
           id: feature._id,

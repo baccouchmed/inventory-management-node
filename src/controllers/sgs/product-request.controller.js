@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const ProductRequest = require('../../models/sgs/product-request');
 const ProductStock = require('../../models/sgs/product-stock');
-const { errorCatch } = require('../../shared/utils');
+const { errorCatch, pdfHeaderFooter, zeroPad } = require('../../shared/utils');
 const { createInvoice } = require('../../services/pdf-creator');
 
 const addProductRequest = async (req, res) => {
@@ -112,45 +112,67 @@ const requestedValidate = async (req, res) => {
 };
 const requesterValidate = async (req, res) => {
   try {
-    const updatedProductRequest = await ProductRequest.findById(req.params.productRequest).populate('productsId.productId');
+    const updatedProductRequest = await ProductRequest.findById(req.params.productRequest)
+      .populate('productsId.productId requestedId requesterId')
+      .populate({ path: 'productsId.productId', populate: { path: 'companyProductId' } })
+      .populate({ path: 'requestedId', populate: { path: 'countryId governorateId municipalityId' } })
+      .populate({ path: 'requesterId', populate: { path: 'countryId governorateId municipalityId' } });
     updatedProductRequest.requesterValidation = true;
-
     await updatedProductRequest.save();
     const products = await Promise.all(updatedProductRequest.productsId.map(async (val, index) => ({
       index: index + 1,
-      name: val.productId.label,
+      name: `${val.productId.label} (${val.productId.companyProductId.name})`,
       quantity: val.quantityValidated || val.quantityRequested,
-      unitPrice: val.unitPriceRequested,
-      total: (val.unitPriceRequested) * (val.quantityValidated || val.quantityRequested),
+      unitPrice: val.unitPriceRequested.toLocaleString('fr-TN', { style: 'currency', currency: 'TND' }),
+      total: ((val.unitPriceRequested) * (val.quantityValidated || val.quantityRequested)).toLocaleString('fr-TN', { style: 'currency', currency: 'TND' }),
+      totalClone: ((val.unitPriceRequested) * (val.quantityValidated || val.quantityRequested)),
     })));
+    const invoices = await ProductRequest.find({
+      requestedId: updatedProductRequest.requestedId._id,
+      requesterValidation: true,
+    });
+    const invoiceNumber = zeroPad(invoices.length, 8);
+
     await createInvoice(
       {
         invoiceRefCol: '123456789',
         dateNow: moment().format('MM-DD-YYYY'),
-        collectivity: {
-          nameCollectivity: 'fournisseur zahra',
-          address: '12 rue zagouan',
-          postalCode: '2098',
-          city: 'zahra',
+        supplier: {
+          name: updatedProductRequest.requestedId.name,
+          address: updatedProductRequest.requestedId.address,
+          postalCode: updatedProductRequest.requestedId.postalCode,
+          municipality: updatedProductRequest.requestedId.municipalityId.municipalityName,
+          governorate: updatedProductRequest.requestedId.governorateId.governorateName,
+          country: updatedProductRequest.requestedId.countryId.countryName,
           tvaNumber: '123456789',
-          email: 'tonimontanacaa@gmail.com',
-          phoneNumber: '+21629905061',
+          phone: updatedProductRequest.requestedId.phone,
+          email: updatedProductRequest.requestedId.email,
+          website: 'www.company.com',
         },
         user: {
-          companyAssociationName: 'store24/24',
-          address: '12 rue zagouan',
-          postalCode: '2098',
-          city: 'zahra',
-          siretRna: '123456789',
+          name: updatedProductRequest.requesterId.name,
+          address: updatedProductRequest.requesterId.address,
+          postalCode: updatedProductRequest.requesterId.postalCode,
+          municipality: updatedProductRequest.requesterId.municipalityId.municipalityName,
+          governorate: updatedProductRequest.requesterId.governorateId.governorateName,
+          country: updatedProductRequest.requesterId.countryId.countryName,
           tvaNumber: '123456789',
+          phone: updatedProductRequest.requesterId.phone,
+          email: updatedProductRequest.requesterId.email,
+          website: 'www.company.com',
         },
-        _id: '123456789',
+        invoiceNumber,
+        logoRequesterId: path.join(__dirname, '..', '..', 'public', 'logo', '1677962138164--harth.png'),
+        logoRequestedId: path.join(__dirname, '..', '..', 'template', 'logo.png'),
         products,
-        totals: products.reduce((a, b) => a + b.total, 0),
+        totals: (products.reduce((a, b) => a + b.totalClone, 0)).toLocaleString('fr-TN', { style: 'currency', currency: 'TND' }),
       },
       path.join('src', 'template', 'product-request-invoice.html'),
       path.join('src', 'private', 'invoices', 'stock-request', req.params.productRequest, 'invoice.pdf'),
       `private/invoices/stock-request/${req.params.productRequest}`,
+    );
+    await pdfHeaderFooter(
+      path.join('src', 'private', 'invoices', 'stock-request', req.params.productRequest, 'invoice.pdf'),
     );
     return res.status(204).end();
   } catch (e) {

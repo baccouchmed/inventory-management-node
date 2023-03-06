@@ -18,11 +18,10 @@ const generatePdf = async (data, template, output) => {
   try {
     const htmlTemplate = await getTemplateHtml(template);
     const dynamicTemplate = await hb.compile(htmlTemplate, { strict: true });
-    const result = await dynamicTemplate(data, {
+    const html = dynamicTemplate(data, {
       allowProtoPropertiesByDefault: true,
       allowProtoMethodsByDefault: true,
     });
-    const html = result;
     const html5ToPDF = new HTML5ToPDF({
       inputBody: html,
       outputPath: output,
@@ -32,7 +31,7 @@ const generatePdf = async (data, template, output) => {
         printBackground: true,
       },
       templatePath: path.join('src', 'template'),
-      renderDelay: 1000,
+      renderDelay: 5000,
       launchOptions: {
         headless: true,
         args: ['--no-sandbox'],

@@ -3,124 +3,107 @@
 
 <head>
   <link rel="stylesheet" href="product-request-invoice.css" />
-
-  <style>
-    .container {
-      max-width: 80%;
-      margin: auto;
-      margin-top: 50px;
-      line-height: 0.2;
-      text-align: left;
-      font-size: 14px;
-    }
-    div {
-      margin-bottom: 20px;
-    }
-
-    .d-f {
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .f-td {
-      width: 50%;
-    }
-
-    .f-l {
-      float: left;
-    }
-
-    .f-r {
-      float: right;
-    }
-
-
-  </style>
 </head>
+<body class="w-full h-full">
+<div style='height: 120%;width:120%;background-size: cover;position: center; opacity: 0.1;'>
+  <img src="stocky.jpg" width="100%" height="100%" alt="">
 
-<body>
-
-<div class="container">
-  <div class="d-f" style="margin-bottom: 40px;">
-    <div>
-      <p style="font-size: 20px;font-weight: 800">Facture {{invoiceRefCol}}</p>
-      <p>DATE DE LA FACTURE : {{dateNow}}</p>
-
-      <p>TOTAL DÛ : {{totals}}</p>
-    </div>
-  </div>
-  <div class="d-f" style="margin-bottom: 20px;">
-    <div>
-      <p>{{collectivity.nameCollectivity}}</p>
-      <p>{{collectivity.address}}</p>
-      <p>{{collectivity.postalCode}}, {{collectivity.city}}</p>
-      <p>{{#if collectivity.email}}{{collectivity.email}}{{/if}}</p>
-      <p>{{#if collectivity.phoneNumber}}{{collectivity.phoneNumber}}{{/if}}</p>
-    </div>
-    <div>
-      <p style="text-decoration: underline;">Adressé à :</p>
-
-      <p>{{user.companyAssociationName}}</p>
-      <p>{{user.address}}</p>
-      <p>{{user.postalCode}}, {{user.city}}</p>
-      <p> Siret : {{user.siretRna}}</p>
-      <p> TVA : {{user.tvaNumber}}</p>
-
-    </div>
-  </div>
-  <div  style="margin-bottom: 30px;">
-    <p style="text-decoration: underline;">Votre Location : </p>
-    <p>Référence réservation  : {{_id}}</p>
-  </div>
 </div>
-<div>
-  <table style="min-width: 80%" >
-    <tr>
-      <th style="max-width: 10%; min-width: 10%">N°</th>
-      <th style="max-width: 45%; min-width: 45%">Produit</th>
-      <th style="max-width: 15%; min-width: 15%">Quantité</th>
-      <th style="max-width: 15%; min-width: 15%">Prix unitaire</th>
-      <th style="max-width: 15%; min-width: 15%">Total</th>
-    </tr>
-    {{#each products}}
-    <tr >
-      <td   >{{this.index}}</td>
-      <td   >{{this.name}}</td>
-      <td   >{{this.quantity}}</td>
-      <td   >{{this.unitPrice}}</td>
-      <td   >{{this.total}}</td>
-    </tr>
-    {{/each}}
-    <tr >
-      <td   ></td>
-      <td   ></td>
-      <td   ></td>
-      <td   ></td>
-      <td   >{{this.totals}}</td>
-    </tr>
-  </table>
-  <div style="font-size: 10px;
-                  line-height: 0.1;
-                  min-width: 100%;
-                  position: absolute;
-                  bottom:20px;
-                  text-align: center;
-                  margin-left: auto;
-                  margin-right: auto"
-  >
-    <p>
-      Facture émise par MARILOO SAS, 87 rue du Fontenoy – SIRET 90092753400017
-    </p>
-    <p>
-      au nom et pour le compte de {{collectivity.nameCollectivity}}
-    </p>
 
-    <p>
-      {{collectivity.address}}, {{collectivity.postalCode}}, {{collectivity.city}} -
-      TVA : {{collectivity.tvaNumber}}
-    </p>
+<div
+  class="absolute inset-0 min-w-0 text-center overflow-auto w-full">
+
+  <!-- Main -->
+  <div class="inline-block p-10 text-left">
+
+    <!-- Invoice -->
+    <div class="w-5/6 p-10 rounded-2xl">
+
+      <div class="flex items-start">
+        <div class="grid grid-rows-2 place-items-start gap-y-12">
+          <div class="grid auto-cols-max grid-flow-col gap-x-8">
+            <div class="place-self-center w-16">
+              <img
+                class="w-16"
+                src="{{{this.logoRequesterId}}}"
+              >
+              <img
+                class="w-16"
+                src="{{{this.logoRequestedId}}}"
+              >
+            </div>
+            <div class="pl-10 border-l text-md">
+              <div class="font-medium">{{this.supplier.name}}</div>
+              <div>{{this.supplier.address}}</div>
+              <div>{{this.supplier.municipality}}, {{this.supplier.governorate}}, {{this.user.country}}</div>
+              <div>{{this.supplier.phone}}</div>
+              <div>{{this.supplier.email}}</div>
+              <div>{{this.supplier.website}}</div>
+            </div>
+          </div>
+          <div class="grid auto-cols-max grid-flow-col gap-x-8">
+            <div class="place-self-center w-16">
+              <img
+                class="w-16"
+                src="src/public/logo/1677962138164--harth.png">
+            </div>
+            <div class="pl-10 border-l text-md">
+              <div class="font-medium">{{this.user.name}}</div>
+              <div>{{this.user.address}}</div>
+              <div>{{this.user.municipality}}, {{this.user.governorate}}, {{this.user.country}}</div>
+              <div>{{this.user.phone}}</div>
+              <div>{{this.user.email}}</div>
+              <div>{{this.user.website}}</div>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-x-4 gap-y-1 ml-auto">
+          <div class="justify-self-end text-2xl tracking-tight text-secondary">INVOICE</div>
+          <div class="text-2xl">#{{this.invoiceNumber}}</div>
+          <div class="justify-self-end font-medium text-md tracking-tight text-secondary">INVOICE DATE</div>
+          <div class="font-medium text-md">Jul 19, 2022</div>
+          <div class="justify-self-end font-medium text-md tracking-tight text-secondary">DUE DATE</div>
+          <div class="font-medium text-md">Aug 19, 2022</div>
+          <div class="justify-self-end font-medium text-md tracking-tight text-secondary">TOTAL DUE</div>
+          <div class="font-medium text-md">{{this.totals}}</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-12 gap-x-1 mt-16">
+        <!-- Columns -->
+        <div class="col-span-8 font-medium text-md text-secondary">PRODUCTS</div>
+        <div class="font-medium text-md text-right text-secondary">U.P</div>
+        <div class="font-medium text-md text-right text-secondary">QTY</div>
+        <div class="col-span-2 font-medium text-md text-right text-secondary">TOTAL</div>
+
+        <!-- Divider -->
+        <div class="col-span-12 h-2px min-h-2px w-full my-2 border-image-blue"></div>
+        {{#each products}}
+
+          <!-- Item -->
+          <div class="col-span-8">
+          <div class="text-md font-medium">{{this.name}}</div>
+        </div>
+          <div class="text-md self-center text-right">{{this.unitPrice}}</div>
+          <div class="text-md self-center text-right">{{this.quantity}}</div>
+          <div class="text-md col-span-2 self-center text-right">{{this.total}}</div>
+
+          <!-- Divider -->
+          <div class="col-span-12 h-2px min-h-2px w-full my-2 border-image-gray"></div>
+        {{/each}}
+        <!-- Spacer -->
+        <div class="col-span-12 mt-16"></div>
+
+        <!-- Total -->
+        <div class="col-span-10 self-center text-2xl font-medium tracking-tight text-secondary">TOTAL</div>
+        <div class="col-span-2 text-right text-2xl font-medium">{{this.totals}}</div>
+      </div>
+
+    </div>
+
   </div>
+
 </div>
+
 </body>
-
 </html>

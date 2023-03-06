@@ -1,8 +1,7 @@
 const mongoose = require('mongoose');
-require("dotenv").config();
+require('dotenv').config();
 
-const mongoUri = `mongodb://127.0.0.1:27017/admin`;
-console.log(mongoUri)
+const mongoUri = 'mongodb://127.0.0.1:27017/admin';
 const setupMongoServer = async () => {
   try {
     await mongoose.connect(mongoUri, {

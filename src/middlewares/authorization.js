@@ -81,7 +81,6 @@ const isAuthorized = (features_) => async (req, res, next) => {
           companyId,
         });
         if (!userFeatureFind) {
-          console.log(req.user);
           const { groupsId } = req.user;
           userFeatureFind = await GroupFeature.findOne({
             groupsId,

@@ -22,13 +22,11 @@ const badgeStores = async (req, res) => {
     const store = await ProductStore.find({
       companyId: mongoose.Types.ObjectId(req.user.companyId),
     });
-    console.log('store', store);
     const badgeStore = await ProductStock.find({
       companyId: mongoose.Types.ObjectId(req.user.companyId),
       productId: { $in: store.map((val) => (mongoose.Types.ObjectId(val.productId))) },
       inStock: { $lte: 0 },
     }).countDocuments();
-    console.log('badgeStore', badgeStore);
     return res.status(200).json(badgeStore);
   } catch (e) {
     return errorCatch(e, res);

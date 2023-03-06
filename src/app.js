@@ -8,6 +8,7 @@ const app = express();
 
 const server = http.createServer(app);
 
+const hb = require('handlebars');
 const setupMongoServer = require('./middlewares/database');
 const migrationScript = require('./middlewares/migration');
 
@@ -40,6 +41,8 @@ app.use('/api/private', express.static(path.join(__dirname, 'private')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
+hb.registerHelper('toFixed3', (value) => value.toFixed(3));
+
 // RESTful API root
 app.use('/api/authentication', authenticationRoute);
 app.use('/api/users', usersRoute);
