@@ -42,7 +42,7 @@ countriesRoute.post('/', isAuth, isAuthorized([
   },
 ]),
 addCountry);
-countriesRoute.get('/all', isAuth,
+countriesRoute.get('/all',
   getAllCountries);
 // get single country
 countriesRoute.get('/:id',
@@ -54,10 +54,10 @@ countriesRoute.get('/:id',
   ]),
   getSingleCountry);
 // Get governorates
-countriesRoute.get('/:id/governorates', isAuth,
+countriesRoute.get('/:id/governorates',
   getGovernorates);
 // Get municipalities
-countriesRoute.get('/:id/municipalities', isAuth,
+countriesRoute.get('/:id/municipalities',
   getMunicipalities);
 // update country
 countriesRoute.patch('/', isAuth, isAuthorized([

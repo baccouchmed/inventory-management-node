@@ -10,7 +10,7 @@ const { uploadLogo } = require('../../shared/warped-multer');
 const { features, actions } = require('../../shared/enum-features');
 const { isAuth, isAuthorized } = require('../../middlewares/authorization');
 const {
-  paginatedCompaniesProducts, paginatedTypeProducts, paginatedProducts, paginatedProductStocks,
+  paginatedCompaniesProducts, paginatedTypeProducts, paginatedProducts, paginatedNewProducts, paginatedProductStocks,
 } = require('../../middlewares/pagination');
 const {
   getAllCompanyPagination,
@@ -30,6 +30,8 @@ const {
   updateProductLogo,
   getAllProductPagination,
   getAllProductStockPagination,
+  getAllNewProductPagination,
+  validateNewProduct,
 } = require('../../controllers/setting/companies-products.controller');
 
 const companiesProductsRoute = express.Router();
@@ -37,6 +39,7 @@ const companiesProductsRoute = express.Router();
 companiesProductsRoute.post('/', isAuth, addCompany);
 companiesProductsRoute.get('/', isAuth, paginatedCompaniesProducts(CompanyProduct), getAllCompanyPagination);
 companiesProductsRoute.get('/products', isAuth, paginatedProducts(Product), getAllProductPagination);
+companiesProductsRoute.get('/new-products', isAuth, paginatedNewProducts(Product), getAllNewProductPagination);
 companiesProductsRoute.get('/product-stocks', isAuth, paginatedProductStocks(ProductStock), getAllProductStockPagination);
 companiesProductsRoute.patch('/', isAuth, updateCompany);
 companiesProductsRoute.get('/all', isAuth, getAllCompany);
@@ -54,6 +57,7 @@ companiesProductsRoute.post('/products/:id/logo', isAuth, uploadLogo('public').s
 companiesProductsRoute.get('/:id', isAuth, getCompany);
 companiesProductsRoute.get('/:id/type-product', isAuth, getTypeProducts);
 companiesProductsRoute.get('/:id/type-products', isAuth, getCompanyTypeProducts);
+companiesProductsRoute.post('/:id/validate', isAuth, validateNewProduct);
 // companiesRoute.delete('/:id', isAuth, deleteCompany);
 companiesProductsRoute.post('/:id/logo', isAuth, uploadLogo('public').single('logo'), updateLogo);
 

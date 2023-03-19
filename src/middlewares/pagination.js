@@ -5,7 +5,7 @@ const ProductStock = require('../models/sgs/product-stock');
 const ProductStore = require('../models/sgs/product-store');
 const Company = require('../models/administration/company');
 const Contrat = require('../models/sgs/contract');
-const { typesCompany, StatusContract } = require('../shared/enums');
+const { typesCompany, StatusContract, CreateStatusEnum } = require('../shared/enums');
 
 const paginatedUsers = (model) => async (req, res, next) => {
   try {
@@ -938,7 +938,7 @@ const paginatedTypeProducts = (model) => async (req, res, next) => {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     const search = req.query.search || '';
-    const filter = { companyId: mongoose.Types.ObjectId(req.user.companyId) };
+    const filter = { };
     const startIndex = (page - 1) * limit;
     let total = [{ total: 0 }];
     const data = await model.aggregate([
@@ -1652,7 +1652,92 @@ const paginatedProductRequest = (model) => async (req, res, next) => {
       .json({ message: e.message });
   }
 };
-
+const paginatedNewProducts = (model) => async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const search = req.query.search || '';
+    const id = req.query.id || null;
+    const type = req.query.type || null;
+    const company = req.query.company || null;
+    const filter = { status: CreateStatusEnum.pending };
+    if (type) {
+      filter.typeProductId = mongoose.Types.ObjectId(type);
+    }
+    if (company) {
+      filter.companyProductId = mongoose.Types.ObjectId(company);
+    }
+    const startIndex = (page - 1) * limit;
+    let total = [{ total: 0 }];
+    const data = await model.aggregate([
+      {
+        $match: filter,
+      },
+      {
+        $lookup: {
+          from: 'companies',
+          localField: 'companyId',
+          foreignField: '_id',
+          as: 'companyId',
+        },
+      },
+      { $unwind: { path: '$companyId', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'typeproducts',
+          localField: 'typeProductId',
+          foreignField: '_id',
+          as: 'typeProductId',
+        },
+      },
+      { $unwind: { path: '$typeProductId', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'companyproducts',
+          localField: 'companyProductId',
+          foreignField: '_id',
+          as: 'companyProductId',
+        },
+      },
+      { $unwind: { path: '$companyProductId', preserveNullAndEmptyArrays: true } },
+      {
+        $match: {
+          $or: [
+            { label: { $regex: search, $options: 'i' } },
+          ],
+        },
+      },
+      {
+        $skip: id ? 0 : startIndex,
+      },
+      {
+        $limit: id ? Infinity : limit,
+      },
+    ]);
+    if (data && data.length > 0) {
+      total = await model.aggregate([
+        {
+          $match: filter,
+        },
+        {
+          $match: {
+            $or: [
+              { label: { $regex: search, $options: 'i' } },
+            ],
+          },
+        },
+        {
+          $count: 'total',
+        },
+      ]);
+    }
+    res.paginatedNewProducts = { data, total: total[0].total };
+    next();
+  } catch (e) {
+    res.status(500)
+      .json({ message: e.message });
+  }
+};
 module.exports = {
   paginatedCompanies,
   paginatedProducts,
@@ -1670,4 +1755,5 @@ module.exports = {
   paginatedContracts,
   paginatedValidateContracts,
   paginatedProductRequest,
+  paginatedNewProducts,
 };

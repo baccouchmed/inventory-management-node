@@ -10,7 +10,7 @@ const features = {
   userFeatures: 'user-features',
   countries: 'countries',
   paramProject: 'param-project',
-  product: 'product',
+  products: 'products',
   companyProduct: 'company-product',
   typeProduct: 'type-product',
   store: 'store',

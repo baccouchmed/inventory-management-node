@@ -39,7 +39,7 @@ const Company = new Schema({
   type: {
     type: String,
   },
-
+  status: { type: String },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Company', Company);

@@ -6,9 +6,10 @@ const ParamProject = require('../../models/administration/paramProject');
 const ProductRequest = require('../../models/sgs/product-request');
 const { errorCatch } = require('../../shared/utils');
 const { warpedJwtSign } = require('../../shared/warped-jwt-sign');
-const { types } = require('../../shared/enums');
+const { types, CreateStatusEnum } = require('../../shared/enums');
 const { getDefaultFeature } = require('../../shared/default-feature');
 const ProductStock = require('../../models/sgs/product-stock');
+const Company = require('../../models/administration/company');
 
 const login = async (req, res) => {
   const { email, password } = req.body;
@@ -133,6 +134,48 @@ const refreshToken = async (req, res) => {
     return errorCatch(e, res);
   }
 };
+
+// ****************************** signUp ****************************** //
+
+const signUp = async (req, res) => {
+  const {
+    company,
+  } = req.body;
+  try {
+    console.log(company);
+    const newCompany = new Company({
+      name: company.name,
+      type: company.type,
+      countryId: company.countryId._id,
+      governorateId: company.governorateId._id,
+      municipalityId: company.municipalityId._id,
+      status: CreateStatusEnum.pending,
+    });
+    if (company.address) {
+      newCompany.address = company.address;
+    }
+    if (company.phone) {
+      newCompany.phone = company.phone;
+    }
+    if (company.email) {
+      newCompany.email = company.email.toLowerCase();
+    }
+    if (company.postalCode) {
+      newCompany.postalCode = company.postalCode;
+    }
+    if (company.identifier) {
+      newCompany.identifier = company.identifier;
+    }
+    if (company.fax) {
+      newCompany.fax = company.fax;
+    }
+    await newCompany.save();
+    return res.status(204).end();
+  } catch (e) {
+    return errorCatch(e, res);
+  }
+};
+
 module.exports = {
-  login, refreshToken,
+  login, refreshToken, signUp,
 };

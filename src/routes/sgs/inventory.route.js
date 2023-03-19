@@ -4,7 +4,7 @@ const { isAuth, isAuthorized } = require('../../middlewares/authorization');
 const inventoryRoute = express.Router();
 
 const {
-  deductStock, updateStore, addProduct, addStock, updatePrice, updateMinStock, addCompanyProduct,
+  deductStock, updateStore, addProduct, addStock, updatePrice, updateMinStock, addCompanyProduct, createProduct,
 } = require('../../controllers/sgs/inventory.controller');
 const { features, actions } = require('../../shared/enum-features');
 
@@ -16,10 +16,16 @@ inventoryRoute.post('/company-product', isAuth, isAuthorized([
 ]), addCompanyProduct);
 inventoryRoute.post('/products', isAuth, isAuthorized([
   {
-    code: features.product,
+    code: features.products,
     actions: [actions.create],
   },
 ]), addProduct);
+inventoryRoute.post('/create-product', isAuth, isAuthorized([
+  {
+    code: features.products,
+    actions: [actions.create],
+  },
+]), createProduct);
 inventoryRoute.patch('/stocks/:id/add', isAuth, isAuthorized([
   {
     code: features.stocks,

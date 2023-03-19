@@ -4,6 +4,7 @@ const CompanyProduct = require('../../models/setting/company-product');
 const ProductStock = require('../../models/sgs/product-stock');
 const ProductStore = require('../../models/sgs/product-store');
 const { errorCatch } = require('../../shared/utils');
+const { CreateStatusEnum } = require('../../shared/enums');
 
 const addCompanyProduct = async (req, res) => {
   try {
@@ -35,6 +36,25 @@ const addProduct = async (req, res) => {
       subcategoryId: product.subcategoryId,
       label: product.label,
       logo: product.logo,
+    });
+
+    await newProduct.save();
+    return res.status(201).json(newProduct);
+  } catch (e) {
+    return errorCatch(e, res);
+  }
+};
+const createProduct = async (req, res) => {
+  try {
+    const {
+      product,
+    } = req.body;
+    const newProduct = new Product({
+      companyId: req.user.companyId,
+      label: product.label,
+      status: CreateStatusEnum.pending,
+      companyProductIdNew: product.companyProductIdNew,
+      typeProductIdNew: product.typeProductIdNew,
     });
 
     await newProduct.save();
@@ -162,4 +182,5 @@ module.exports = {
   updateMinStock,
   deductStock,
   updateStore,
+  createProduct,
 };

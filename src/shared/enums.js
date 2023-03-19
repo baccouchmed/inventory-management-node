@@ -27,6 +27,12 @@ const StatusContract = {
   opened: 'opened',
 };
 Object.freeze(StatusContract);
+const CreateStatusEnum = {
+  pending: 'pending',
+  validate: 'validate',
+  rejected: 'rejected',
+};
+Object.freeze(CreateStatusEnum);
 module.exports = {
-  types, featureStatus, natures, typesCompany, StatusContract,
+  types, featureStatus, natures, typesCompany, StatusContract, CreateStatusEnum,
 };

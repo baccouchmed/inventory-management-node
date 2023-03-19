@@ -6,6 +6,7 @@ const CompanyProduct = require('../../models/setting/company-product');
 const CompanyProductTypeProduct = require('../../models/setting/companyProduct-typeProduct');
 const Product = require('../../models/setting/product');
 const TypeProduct = require('../../models/setting/type-product');
+const { CreateStatusEnum } = require('../../shared/enums');
 
 const addCompany = async (req, res) => {
   try {
@@ -49,6 +50,9 @@ const getAllCompanyPagination = (req, res) => {
 };
 const getAllProductPagination = (req, res) => {
   res.json(res.paginatedProducts);
+};
+const getAllNewProductPagination = (req, res) => {
+  res.json(res.paginatedNewProducts);
 };
 const getAllProductStockPagination = (req, res) => {
   res.json(res.paginatedProductStocks);
@@ -119,7 +123,6 @@ const updateCompany = async (req, res) => {
     return errorCatch(e, res);
   }
 };
-
 const getAllCompany = async (req, res) => {
   try {
     const companies = await CompanyProduct.find();
@@ -361,6 +364,50 @@ const getCompanyTypeProducts = async (req, res) => {
     return errorCatch(e, res);
   }
 };
+const validateNewProduct = async (req, res) => {
+  try {
+    const {
+      data,
+    } = req.body;
+    const updatedProduct = await Product.findById(req.params.id);
+
+    if (data.validProductNew) {
+      updatedProduct.label = data.validProductNew;
+    }
+    if (data.validCompanyProductIdNew) {
+      updatedProduct.companyProductId = data.validCompanyProductIdNew;
+    } else {
+      // create new company product
+      const newCompanyProduct = await CompanyProduct.create({
+        companyId: req.user.companyId,
+        name: updatedProduct.companyProductIdNew,
+      });
+      updatedProduct.companyProductId = newCompanyProduct._id;
+    }
+    if (data.validTypeProductIdNew) {
+      updatedProduct.typeProductId = data.validTypeProductIdNew;
+    } else {
+      // create new type product
+      const newTypeProduct = await TypeProduct.create({
+        companyId: req.user.companyId,
+        label: updatedProduct.typeProductIdNew,
+      });
+      updatedProduct.typeProductId = newTypeProduct._id;
+    }
+    const companyProductTypeProductId = await CompanyProductTypeProduct.create({
+      companyId: req.user.companyId,
+      companyProductId: updatedProduct.companyProductId,
+      typeProductId: updatedProduct.typeProductId,
+    });
+    updatedProduct.companyProductTypeProductId = companyProductTypeProductId._id;
+    updatedProduct.status = CreateStatusEnum.validate;
+    await updatedProduct.save();
+    return res.status(204).end();
+  } catch (e) {
+    return errorCatch(e, res);
+  }
+};
+
 module.exports = {
   addCompany,
   getAllCompanyPagination,
@@ -379,4 +426,6 @@ module.exports = {
   updateProductLogo,
   getAllProductPagination,
   getAllProductStockPagination,
+  getAllNewProductPagination,
+  validateNewProduct,
 };

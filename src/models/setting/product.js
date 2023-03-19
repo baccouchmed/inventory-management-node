@@ -5,7 +5,6 @@ const { Schema } = mongoose;
 const Product = new Schema({
   companyId: {
     type: Schema.Types.ObjectId,
-    required: true,
     ref: 'Company',
   },
   companyProductId: {
@@ -20,10 +19,31 @@ const Product = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'CompanyProductTypeProduct',
   },
+  companyProductIdNew: {
+    type: String,
+  },
+  typeProductIdNew: {
+    type: String,
+  },
+  companyProductTypeProductIdNew: {
+    type: String,
+  },
   label: {
     type: String,
   },
   logo: {
+    type: String,
+  },
+  lot: {
+    type: String,
+  },
+  DF: {
+    type: String,
+  },
+  DLC: {
+    type: String,
+  },
+  status: {
     type: String,
   },
 }, { timestamps: true });
