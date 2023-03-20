@@ -124,11 +124,13 @@ const refreshToken = async (req, res) => {
         });
       }
     }
+    console.log('***************', companyId);
     if (companyId) {
       user.companyId = companyId;
     }
     user._id = user.id;
     const token = await warpedJwtSign(user);
+    console.log(token);
     return res.status(200).json(token);
   } catch (e) {
     return errorCatch(e, res);

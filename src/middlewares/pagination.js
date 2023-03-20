@@ -114,9 +114,25 @@ const paginatedCompanies = (model) => async (req, res, next) => {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     const search = req.query.search || '';
+    const country = req.query.country || null;
+    const governorate = req.query.governorate || null;
+    const municipality = req.query.municipality || null;
+    const status = req.query.status || null;
     let sortCode = {};
     let sortName = {};
     const filter = {};
+    if (country) {
+      filter.countryId = mongoose.Types.ObjectId(country);
+    }
+    if (governorate) {
+      filter.governorateId = mongoose.Types.ObjectId(governorate);
+    }
+    if (municipality) {
+      filter.municipalityId = mongoose.Types.ObjectId(municipality);
+    }
+    if (status) {
+      filter.status = status;
+    }
     switch (req.query.sortCode) {
       case 'up':
         sortCode = { code: 1 };

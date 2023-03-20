@@ -1,23 +1,32 @@
 const features = {
-  company: 'company',
-  features: 'features',
+  // ***** group 1 ***** //
   setting: 'setting',
-  administration: 'administration',
-  account: 'account',
-  groups: 'groups',
-  users: 'users',
-  profile: 'profile',
-  userFeatures: 'user-features',
-  countries: 'countries',
-  paramProject: 'param-project',
-  products: 'products',
   companyProduct: 'company-product',
   typeProduct: 'type-product',
+  products: 'products',
   store: 'store',
   stocks: 'stocks',
+  countries: 'countries',
+  newProducts: 'new-products',
+  // ***** group 2 ***** //
+  sgs: 'sgs',
+  calendar: 'calendar',
   contracts: 'contracts',
-  productRequest: 'product-request',
   supplierClient: 'supplier-client',
+  productRequest: 'product-request',
+  myRequests: 'my-requests',
+  otherRequests: 'other-requests',
+  // ***** group 3 ***** //
+  company: 'company',
+  features: 'features',
+  administration: 'administration',
+  groups: 'groups',
+  users: 'users',
+  userFeatures: 'user-features',
+  paramProject: 'param-project',
+  // ***** group 4 ***** //
+  account: 'account',
+  profile: 'profile',
 };
 Object.freeze(features);
 const actions = {

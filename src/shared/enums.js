@@ -29,7 +29,7 @@ const StatusContract = {
 Object.freeze(StatusContract);
 const CreateStatusEnum = {
   pending: 'pending',
-  validate: 'validate',
+  validated: 'validated',
   rejected: 'rejected',
 };
 Object.freeze(CreateStatusEnum);

@@ -18,7 +18,8 @@ const {
   deleteCompany,
   updateLogo,
   getMyCompany,
-
+  validateCompany,
+  rejectCompany,
 } = require('../../controllers/administration/companies.controller');
 
 const companiesRoute = express.Router();
@@ -31,6 +32,8 @@ companiesRoute.patch('/', isAuth, updateCompany);
 companiesRoute.get('/all', isAuth, getAllCompany);
 companiesRoute.get('/me', isAuth, getMyCompany);
 companiesRoute.get('/:id', isAuth, getCompany);
+companiesRoute.get('/:id/validate', isAuth, validateCompany);
+companiesRoute.get('/:id/reject', isAuth, rejectCompany);
 companiesRoute.delete('/:id', isAuth, deleteCompany);
 companiesRoute.post('/:id/logo', isAuth, uploadLogo('public').single('logo'), updateLogo);
 

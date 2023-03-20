@@ -4,8 +4,12 @@ const {
 const { errorCatch } = require('../../shared/utils');
 const Company = require('../../models/administration/company');
 const User = require('../../models/administration/user');
+const GroupFeature = require('../../models/administration/group-feature');
 const Group = require('../../models/administration/group');
+const Feature = require('../../models/setting/feature');
 const ParamProject = require('../../models/administration/paramProject');
+const { CreateStatusEnum } = require('../../shared/enums');
+const { features } = require('../../shared/enum-features');
 
 const addCompany = async (req, res) => {
   try {
@@ -171,6 +175,114 @@ const updateCompany = async (req, res) => {
     return errorCatch(e, res);
   }
 };
+const validateCompany = async (req, res) => {
+  try {
+    const updatedCompany = await Company.findByIdAndUpdate(req.params.id,
+      {
+        status: CreateStatusEnum.validated,
+      });
+    await updatedCompany.save();
+    const paramProject = await ParamProject.create({
+      companyId: updatedCompany._id,
+      codeAttemptNumber: null,
+      codeExpirationTime: null,
+      suspendPassword: false,
+      usersCreation: req.user.id,
+      suffixContactCode: null,
+      lengthContactCode: null,
+    });
+    await paramProject.save();
+    const trialFeatures = [
+      {
+        code: features.setting,
+        list: true,
+        create: true,
+        read: true,
+        update: true,
+        delete: true,
+      },
+      {
+        code: features.products,
+        list: true,
+        create: true,
+        read: true,
+        update: true,
+        delete: true,
+      },
+      {
+        code: features.stocks,
+        list: true,
+        create: false,
+        read: true,
+        update: false,
+        delete: false,
+      },
+      {
+        code: features.store,
+        list: true,
+        create: false,
+        read: true,
+        update: false,
+        delete: false,
+      },
+
+      {
+        code: features.account,
+        list: true,
+        create: true,
+        read: true,
+        update: true,
+        delete: true,
+      },
+      {
+        code: features.profile,
+        list: true,
+        create: true,
+        read: true,
+        update: true,
+        delete: true,
+      },
+    ];
+    const groupTrial = await Group.create({
+      companyId: updatedCompany._id,
+      code: '001',
+      label: 'TRIAL',
+    });
+    for await (const trialFeature of trialFeatures) {
+      const featuresId = await Feature.findOne({ code: trialFeature.code });
+      if (featuresId) {
+        const newGroupFeatureTrial = new GroupFeature({
+          companyId: updatedCompany._id,
+          featuresId: featuresId._id,
+          groupsId: groupTrial._id,
+          status: true,
+          list: trialFeature.list,
+          create: trialFeature.create,
+          read: trialFeature.read,
+          update: trialFeature.update,
+          delete: trialFeature.delete,
+          defaultFeature: trialFeature.code === 'profile',
+        });
+        await newGroupFeatureTrial.save();
+      }
+    }
+    return res.status(204).end();
+  } catch (e) {
+    return errorCatch(e, res);
+  }
+};
+const rejectCompany = async (req, res) => {
+  try {
+    const updatedCompany = await Company.findByIdAndUpdate(req.params.id,
+      {
+        status: CreateStatusEnum.rejected,
+      });
+    await updatedCompany.save();
+    return res.status(204).end();
+  } catch (e) {
+    return errorCatch(e, res);
+  }
+};
 const getAllCompany = async (req, res) => {
   try {
     const companies = await Company.find();
@@ -277,9 +389,11 @@ module.exports = {
   getAllContractsPagination,
   getAllValidateContractsPagination,
   updateCompany,
+  validateCompany,
   getAllCompany,
   getMyCompany,
   getCompany,
   deleteCompany,
   updateLogo,
+  rejectCompany,
 };
